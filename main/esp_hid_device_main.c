@@ -50,27 +50,6 @@ typedef struct
 
 #if CONFIG_BT_BLE_ENABLED
 static local_param_t s_ble_hid_param = {0};
-const unsigned char hidapiReportMap[] = { //8 bytes input, 8 bytes feature
-    0x06, 0x00, 0xFF,  // Usage Page (Vendor Defined 0xFF00)
-    0x0A, 0x00, 0x01,  // Usage (0x0100)
-    0xA1, 0x01,        // Collection (Application)
-    0x85, 0x01,        //   Report ID (1)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x26, 0xFF, 0x00,  //   Logical Maximum (255)
-    0x75, 0x08,        //   Report Size (8)
-    0x95, 0x08,        //   Report Count (8)
-    0x09, 0x01,        //   Usage (0x01)
-    0x82, 0x02, 0x01,  //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Buffered Bytes)
-    0x95, 0x08,        //   Report Count (8)
-    0x09, 0x02,        //   Usage (0x02)
-    0xB2, 0x02, 0x01,  //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile,Buffered Bytes)
-    0x95, 0x08,        //   Report Count (8)
-    0x09, 0x03,        //   Usage (0x03)
-    0x91, 0x02,        //   Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-    0xC0,              // End Collection
-
-    // 38 bytes
-};
 
 const unsigned char mediaReportMap[] = {
     0x05, 0x0C,        // Usage Page (Consumer)
@@ -93,10 +72,6 @@ const unsigned char mediaReportMap[] = {
 };
 
 static esp_hid_raw_report_map_t ble_report_maps[] = {
-/*    {
-        .data = hidapiReportMap,
-        .len = sizeof(hidapiReportMap)
-    },*/
     {
         .data = mediaReportMap,
         .len = sizeof(mediaReportMap)
@@ -114,94 +89,27 @@ static esp_hid_device_config_t ble_hid_config = {
     .report_maps_len    = 1
 };
 
-#define HID_CC_RPT_MUTE                 1
-#define HID_CC_RPT_POWER                2
-#define HID_CC_RPT_LAST                 3
-#define HID_CC_RPT_ASSIGN_SEL           4
-#define HID_CC_RPT_PLAY                 5
-#define HID_CC_RPT_PAUSE                6
-#define HID_CC_RPT_RECORD               7
-#define HID_CC_RPT_FAST_FWD             8
-#define HID_CC_RPT_REWIND               9
-#define HID_CC_RPT_SCAN_NEXT_TRK        10
-#define HID_CC_RPT_SCAN_PREV_TRK        11
-#define HID_CC_RPT_STOP                 12
-
-#define HID_CC_RPT_CHANNEL_UP           0x10
-#define HID_CC_RPT_CHANNEL_DOWN         0x30
-#define HID_CC_RPT_VOLUME_UP            0x40
-#define HID_CC_RPT_VOLUME_DOWN          0x80
-
-// HID Consumer Control report bitmasks
-#define HID_CC_RPT_NUMERIC_BITS         0xF0
-#define HID_CC_RPT_CHANNEL_BITS         0xCF
 #define HID_CC_RPT_VOLUME_BITS          0x3F
-#define HID_CC_RPT_BUTTON_BITS          0xF0
-#define HID_CC_RPT_SELECTION_BITS       0xCF
 
 // Macros for the HID Consumer Control 2-byte report
-#define HID_CC_RPT_SET_NUMERIC(s, x)    (s)[0] &= HID_CC_RPT_NUMERIC_BITS;   (s)[0] = (x)
-#define HID_CC_RPT_SET_CHANNEL(s, x)    (s)[0] &= HID_CC_RPT_CHANNEL_BITS;   (s)[0] |= ((x) & 0x03) << 4
 #define HID_CC_RPT_SET_VOLUME_UP(s)     (s)[0] &= HID_CC_RPT_VOLUME_BITS;    (s)[0] |= 0x40
 #define HID_CC_RPT_SET_VOLUME_DOWN(s)   (s)[0] &= HID_CC_RPT_VOLUME_BITS;    (s)[0] |= 0x80
-#define HID_CC_RPT_SET_BUTTON(s, x)     (s)[1] &= HID_CC_RPT_BUTTON_BITS;    (s)[1] |= (x)
-#define HID_CC_RPT_SET_SELECTION(s, x)  (s)[1] &= HID_CC_RPT_SELECTION_BITS; (s)[1] |= ((x) & 0x03) << 4
 
-// HID Consumer Usage IDs (subset of the codes available in the USB HID Usage Tables spec)
-#define HID_CONSUMER_POWER          48  // Power
-#define HID_CONSUMER_RESET          49  // Reset
-#define HID_CONSUMER_SLEEP          50  // Sleep
-
-#define HID_CONSUMER_MENU           64  // Menu
-#define HID_CONSUMER_SELECTION      128 // Selection
-#define HID_CONSUMER_ASSIGN_SEL     129 // Assign Selection
-#define HID_CONSUMER_MODE_STEP      130 // Mode Step
-#define HID_CONSUMER_RECALL_LAST    131 // Recall Last
-#define HID_CONSUMER_QUIT           148 // Quit
-#define HID_CONSUMER_HELP           149 // Help
-#define HID_CONSUMER_CHANNEL_UP     156 // Channel Increment
-#define HID_CONSUMER_CHANNEL_DOWN   157 // Channel Decrement
-
-#define HID_CONSUMER_PLAY           176 // Play
-#define HID_CONSUMER_PAUSE          177 // Pause
-#define HID_CONSUMER_RECORD         178 // Record
-#define HID_CONSUMER_FAST_FORWARD   179 // Fast Forward
-#define HID_CONSUMER_REWIND         180 // Rewind
-#define HID_CONSUMER_SCAN_NEXT_TRK  181 // Scan Next Track
-#define HID_CONSUMER_SCAN_PREV_TRK  182 // Scan Previous Track
-#define HID_CONSUMER_STOP           183 // Stop
-#define HID_CONSUMER_EJECT          184 // Eject
-#define HID_CONSUMER_RANDOM_PLAY    185 // Random Play
-#define HID_CONSUMER_SELECT_DISC    186 // Select Disk
-#define HID_CONSUMER_ENTER_DISC     187 // Enter Disc
-#define HID_CONSUMER_REPEAT         188 // Repeat
-#define HID_CONSUMER_STOP_EJECT     204 // Stop/Eject
-#define HID_CONSUMER_PLAY_PAUSE     205 // Play/Pause
-#define HID_CONSUMER_PLAY_SKIP      206 // Play/Skip
-
-#define HID_CONSUMER_VOLUME         224 // Volume
-#define HID_CONSUMER_BALANCE        225 // Balance
-#define HID_CONSUMER_MUTE           226 // Mute
-#define HID_CONSUMER_BASS           227 // Bass
 #define HID_CONSUMER_VOLUME_UP      233 // Volume Increment
 #define HID_CONSUMER_VOLUME_DOWN    234 // Volume Decrement
 
 #define HID_RPT_ID_CC_IN        3   // Consumer Control input report ID
 #define HID_CC_IN_RPT_LEN       2   // Consumer Control input report Len
 
+lv_obj_t * ui_Button1;
+lv_obj_t * ui_lable;
+lv_group_t * g;
+
 void esp_hidd_send_consumer_value(uint8_t key_cmd, bool key_pressed)
 {
     uint8_t buffer[HID_CC_IN_RPT_LEN] = {0, 0};
     if (key_pressed) {
         switch (key_cmd) {
-        case HID_CONSUMER_CHANNEL_UP:
-            HID_CC_RPT_SET_CHANNEL(buffer, HID_CC_RPT_CHANNEL_UP);
-            break;
-
-        case HID_CONSUMER_CHANNEL_DOWN:
-            HID_CC_RPT_SET_CHANNEL(buffer, HID_CC_RPT_CHANNEL_DOWN);
-            break;
-
         case HID_CONSUMER_VOLUME_UP:
             HID_CC_RPT_SET_VOLUME_UP(buffer);
 			buffer[0] = 0x1;
@@ -210,57 +118,6 @@ void esp_hidd_send_consumer_value(uint8_t key_cmd, bool key_pressed)
         case HID_CONSUMER_VOLUME_DOWN:
             HID_CC_RPT_SET_VOLUME_DOWN(buffer);
 			buffer[0] = 0x2;
-            break;
-
-        case HID_CONSUMER_MUTE:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_MUTE);
-            break;
-
-        case HID_CONSUMER_POWER:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_POWER);
-            break;
-
-        case HID_CONSUMER_RECALL_LAST:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_LAST);
-            break;
-
-        case HID_CONSUMER_ASSIGN_SEL:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_ASSIGN_SEL);
-            break;
-
-        case HID_CONSUMER_PLAY:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_PLAY);
-            break;
-
-        case HID_CONSUMER_PAUSE:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_PAUSE);
-            break;
-
-        case HID_CONSUMER_RECORD:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_RECORD);
-            break;
-
-        case HID_CONSUMER_FAST_FORWARD:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_FAST_FWD);
-            break;
-
-        case HID_CONSUMER_REWIND:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_REWIND);
-            break;
-
-        case HID_CONSUMER_SCAN_NEXT_TRK:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_SCAN_NEXT_TRK);
-            break;
-
-        case HID_CONSUMER_SCAN_PREV_TRK:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_SCAN_PREV_TRK);
-            break;
-
-        case HID_CONSUMER_STOP:
-            HID_CC_RPT_SET_BUTTON(buffer, HID_CC_RPT_STOP);
-            break;
-
-        default:
             break;
         }
     }
@@ -277,10 +134,8 @@ void button_event_cb(lv_event_t * e)
 	}
 }
 
-void ble_hid_task_start_up(void)
+void ble_hid_ui_start_up(void)
 {
-	lv_obj_t * ui_Button1;
-
     ui_Button1 = lv_btn_create(lv_scr_act());
     lv_obj_set_width(ui_Button1, 100);
     lv_obj_set_height(ui_Button1, 40);
@@ -292,15 +147,37 @@ void ble_hid_task_start_up(void)
     lv_obj_set_style_bg_opa(ui_Button1, 255, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_set_style_bg_color(ui_Button1, lv_color_hex(0xDD12F1), LV_PART_MAIN | LV_STATE_FOCUSED);
     lv_obj_set_style_bg_opa(ui_Button1, 255, LV_PART_MAIN | LV_STATE_FOCUSED);
-	lv_obj_add_event_cb(ui_Button1, button_event_cb, LV_EVENT_ALL, ui_Button1);
+	lv_obj_set_user_data(ui_Button1, "button1");
+	lv_obj_add_flag(ui_Button1, LV_OBJ_FLAG_HIDDEN);
+
+	lv_obj_t *button_lable = lv_label_create(ui_Button1);
+	lv_label_set_text(button_lable, "Take photo");
+	lv_obj_set_align(button_lable, LV_ALIGN_CENTER);
+
+	ui_lable = lv_label_create(lv_scr_act());
+	lv_label_set_text(ui_lable, "Please connect bluetooth");
+	lv_obj_set_align(ui_lable, LV_ALIGN_CENTER);
+	lv_obj_set_user_data(ui_lable, "lable");
 
 	lv_group_t * g = lv_group_create();
 	lv_group_add_obj(g, ui_Button1);
 	lv_port_indev_addgroup(g);
 }
 
+void ble_hid_task_start_up()
+{
+	lv_obj_add_flag(ui_lable, LV_OBJ_FLAG_HIDDEN);
+	lv_obj_clear_flag(ui_Button1, LV_OBJ_FLAG_HIDDEN);
+	lv_obj_add_event_cb(ui_Button1, button_event_cb, LV_EVENT_ALL, ui_Button1);
+	lv_group_focus_obj(ui_Button1);
+}
+
 void ble_hid_task_shut_down(void)
 {
+	lv_obj_remove_event_cb(ui_Button1, button_event_cb);
+	lv_obj_add_flag(ui_Button1, LV_OBJ_FLAG_HIDDEN);
+	lv_obj_clear_flag(ui_lable, LV_OBJ_FLAG_HIDDEN);
+
     if (s_ble_hid_param.task_hdl) {
         vTaskDelete(s_ble_hid_param.task_hdl);
         s_ble_hid_param.task_hdl = NULL;
@@ -360,6 +237,7 @@ static void ble_hidd_event_callback(void *handler_args, esp_event_base_t base, i
 #endif
 
 extern void lvgl_spi_lcd_init(void);
+
 void app_main(void)
 {
     esp_err_t ret;
@@ -387,9 +265,9 @@ void app_main(void)
     }
 
 	lvgl_spi_lcd_init();
+	ble_hid_ui_start_up();
 
     ESP_LOGI(TAG, "setting ble device");
     ESP_ERROR_CHECK(
         esp_hidd_dev_init(&ble_hid_config, ESP_HID_TRANSPORT_BLE, ble_hidd_event_callback, &s_ble_hid_param.hid_dev));
-
 }
